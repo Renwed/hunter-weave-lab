@@ -16,12 +16,13 @@ function timeText(seconds) {
   return `${seconds < 0 ? '−' : ''}${minutes}:${remainder}`;
 }
 
-function lastAt(records, time) {
+function lastAt(records, time, order = [], line = Infinity) {
   let low = 0;
   let high = records.length;
   while (low < high) {
     const mid = (low + high) >>> 1;
-    if (records[mid][0] <= time) low = mid + 1;
+    const at = records[mid][0];
+    if (at < time || (at === time && (order[mid] ?? 0) <= line)) low = mid + 1;
     else high = mid;
   }
   return low - 1;
@@ -130,8 +131,7 @@ function drawArena(distance, zone) {
   ctx.fillText(zone, playerX, y - 26);
 }
 
-function positionAt(moves, time) {
-  const move = moves[lastAt(moves, time)];
+function positionAt(move, time) {
   if (!move) return 12;
   return move[1] + (move[2] - move[1]) * Math.min(1, (time - move[0]) / move[3]);
 }
@@ -148,8 +148,9 @@ function drawDistance(moves, from, to) {
   ctx.beginPath();
   for (let x = 0; x <= width; x++) {
     const sample = from + x / width * (to - from);
-    if (x === 0) ctx.moveTo(x, y(positionAt(moves, sample)));
-    else ctx.lineTo(x, y(positionAt(moves, sample)));
+    const sampleY = y(positionAt(moves[lastAt(moves, sample)], sample));
+    if (x === 0) ctx.moveTo(x, sampleY);
+    else ctx.lineTo(x, sampleY);
   }
   ctx.strokeStyle = '#89d9eb';
   ctx.lineWidth = 2;
@@ -158,9 +159,9 @@ function drawDistance(moves, from, to) {
 
 const openerTour = [
   [0, 'Set up before the pull', 'At −20.00 s, your hunter casts Aspect of the Hawk. The pre-pull move at −19.00 s changes your starting position from 12.00 to 11.67 yd. Hunter’s Mark goes on at −3.30 s.'],
-  [3, 'Pre-cast Aimed Shot', 'Start Aimed Shot at −1.70 s. The simulator then uses Major Frenzy Potion at −1.50 s while the cast is underway. Aimed Shot completes at 0.01 s.'],
+  [3, 'Pre-cast Aimed Shot', 'Start Aimed Shot at −1.70 s. The simulator then uses Major Frenzy Potion at −1.50 s while the cast is underway. Aimed Shot completes at 0.01 s, then its damage lands at 0.30 s.'],
   [7, 'Apply Serpent Sting at range', 'At 0.01 s the recorded order is Aimed Shot completion, Rapid Fire, then Serpent Sting. These events share a displayed timestamp. You are still at 11.67 yd.'],
-  [8, 'Watch for the Auto Shot', 'The first Auto Shot fires at 0.43 s. In this run you remain at range until 0.99 s. Use the Bow timer to follow the recorded shot timing.'],
+  [8, 'Watch for the Auto Shot', 'The first Auto Shot fires at 0.43 s and hits at 0.72 s. In this run you remain at range until 0.99 s. Use the Bow timer to follow the recorded shot timing.'],
   [11, 'Queue Raptor Strike and walk in', 'At 0.99 s Dense Dynamite completes and Raptor Strike is queued. The walk begins at that same displayed time, toward 4.60 yd. Queueing Raptor Strike is separate from the swing that delivers it.'],
   [12, 'Swing as you reach melee', 'At 1.94 s, around the 5 yd melee boundary, the queued Raptor Strike is recorded as the melee attack. Strider Kick follows at the same displayed timestamp. The next weave can use a different melee action.'],
   [14, 'Walk back to shooting range', 'At 2.34 s you start back from 4.60 yd. The movement takes about 0.78 s. Wait for shooting range before using a ranged attack.'],
@@ -171,8 +172,8 @@ const clipStart = 23.4;
 const clipEnd = 35.44;
 const combatTour = [
   [52, 'Begin at shooting range', 'At 23.40 s, your hunter is at 11.67 yd and begins casting Aimed Shot. The two timer bars follow the next recorded Auto Shot and melee swing.'],
-  [53, 'Watch Auto Shot fire', 'Auto Shot fires at 24.72 s while Aimed Shot is still casting. Stay at range for the cast to finish.'],
-  [54, 'Finish Aimed Shot', 'Aimed Shot completes at 25.11 s. The log also records the Raptor Strike queue and the start of the inward walk at this displayed timestamp.'],
+  [53, 'Watch Auto Shot fire', 'Auto Shot fires at 24.72 s while Aimed Shot is still casting. The Auto Shot impact is logged at 25.01 s. Stay at range for the cast to finish.'],
+  [54, 'Finish Aimed Shot', 'Aimed Shot completes at 25.11 s and hits at 25.40 s. The log also records the Raptor Strike queue and the start of the inward walk at this displayed timestamp.'],
   [55, 'Queue Raptor Strike', 'Queueing lines up Raptor Strike for the next melee swing. The cast entry here is the queue, so the strike itself appears later.'],
   [56, 'Cross the dead zone', 'The walk starts at 11.67 yd and heads toward 4.60 yd. Watch the marker cross the space between shooting and melee range.'],
   [58, 'Swing and use Strider Kick', 'At 26.06 s, Raptor Strike fires as you reach the 5 yd melee boundary. Strider Kick follows at the same displayed time.'],
@@ -218,7 +219,7 @@ function buildSpellBar(events, catalog) {
   return tiles;
 }
 
-function startReplay({events, moves, mana, duration, catalog, damage}, apl, source) {
+function startReplay({events, moves, mana, duration, catalog, damage, logOrder}, apl, source) {
   $('sim-link').href = source.trim();
 
   const spellTiles = buildSpellBar(events, catalog);
@@ -227,13 +228,24 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
   addApl([...apl.prepullActions].sort((a, b) => prepullTime(a) - prepullTime(b)), 'Before the pull', 'prepull', catalog);
   addApl(apl.priorityList, 'Combat priority', 'priority', catalog, true);
   for (const group of apl.groups) addApl(group.actions, group.name + ' group', 'group', catalog);
-  const autos = events.filter(event => event[1] === 'ranged');
-  const swings = events.filter(event => event[1] === 'melee');
+  const attackTrack = kind => {
+    const records = [];
+    const order = [];
+    for (const [index, event] of events.entries()) {
+      if (event[1] !== kind) continue;
+      records.push(event);
+      order.push(logOrder.events[index]);
+    }
+    return {records, order};
+  };
+  const autos = attackTrack('ranged');
+  const swings = attackTrack('melee');
   let from = clipStart;
   let to = clipEnd;
   let first = 52;
   let last = 75;
   let time = from;
+  let eventLine = Infinity;
   let eventIndex = first;
   let pendingStop = null;
   let tourSteps = combatTour;
@@ -248,7 +260,13 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
   const dpsFormat = new Intl.NumberFormat(undefined, {maximumFractionDigits: 1});
 
   function updateDamage() {
-    const cursor = lastAt(damage, time);
+    // Damage immediately following a selected cast belongs to that step, up to
+    // the next visible action at the same logged timestamp.
+    const next = events[eventIndex + 1];
+    const damageLine = eventLine !== Infinity && next?.[0] === time
+      ? logOrder.events[eventIndex + 1] - 1
+      : Infinity;
+    const cursor = lastAt(damage, time, logOrder.damage, damageLine);
     if (cursor !== damageCursor) {
       damageCursor = cursor;
       const byAbility = new Map();
@@ -281,14 +299,14 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
     const full = $('scope').value === 'full';
     from = full ? start : clipStart;
     to = full ? duration : clipEnd;
-    first = Math.max(0, lastAt(events, from - .001) + 1);
+    first = lastAt(events, from, logOrder.events, -1) + 1;
     last = lastAt(events, to);
     tourSteps = full ? openerTour : combatTour;
-    damageStart = lastAt(damage, Math.max(0, from) - .001) + 1;
+    damageStart = lastAt(damage, Math.max(0, from), logOrder.damage, -1) + 1;
     damageCursor = null;
     $('damage-scope').textContent = full ? 'Since pull' : 'This loop';
     seek.min = from;
-    seek.max = to;
+    seek.max = to.toFixed(2);
     $('clip-summary').textContent = full
       ? 'Follow your recorded opener or explore the entire sim run.'
       : 'Three recorded weaves from your APL. The clip repeats from 23.40 to 35.44 s.';
@@ -313,8 +331,8 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
     jump(first);
   }
 
-  function countdown(records, bar) {
-    const index = lastAt(records, time);
+  function countdown({records, order}, bar) {
+    const index = lastAt(records, time, order, eventLine);
     const next = records[index + 1];
     const previous = records[index];
     $(bar).value = previous && next ? (time - previous[0]) / (next[0] - previous[0]) : 0;
@@ -328,8 +346,12 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
     }
     $('event-name').textContent = name;
     $('event-description').textContent = detail ? `${explanations[kind]} ${detail.startsWith('priority') || detail.startsWith('prepull') ? 'APL ' + detail + '.' : detail}` : explanations[kind];
-    const nextEvent = events[eventIndex + 1];
-    $('next-event').textContent = nextEvent ? `Up next · ${nextEvent[2]} at ${timeText(nextEvent[0])}` : 'Last event in this iteration';
+    const nextEvent = eventIndex < last ? events[eventIndex + 1] : null;
+    $('next-event').textContent = nextEvent
+      ? `Up next · ${nextEvent[2]} at ${timeText(nextEvent[0])}`
+      : $('scope').value === 'clip'
+        ? `Loop restarts at ${timeText(from)}`
+        : 'Last event in this iteration';
     const iconBox = $('event-icon');
     iconBox.replaceChildren();
     if (icon) {
@@ -364,18 +386,26 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
   }
 
   function render() {
-    const distance = positionAt(moves, time);
-    const move = moves[lastAt(moves, time)];
+    const move = moves[lastAt(moves, time, logOrder.moves, eventLine)];
+    let distance = positionAt(move, time);
+    // The next logged movement segment starts at the measured melee boundary.
+    // At the swing itself use that measurement rather than interpolating
+    // from a rounded segment start and swing timestamp.
+    const meleeBoundary = move?.[1] > 5 && moves[lastAt(moves, time)]?.[1] === 5;
+    if (meleeBoundary) {
+      const swing = lastAt(swings.records, time, swings.order, eventLine);
+      if (swings.records[swing]?.[0] === time) distance = 5;
+    }
     const walking = time >= 0 && move && time < move[0] + move[3] && Math.abs(move[1] - move[2]) > 0.5;
     const phase = walking && move[2] > move[1] ? 3 : distance <= 5.0001 ? 2 : walking ? 1 : 0;
     phases.forEach((card, index) => {
       if (index === phase) card.setAttribute('aria-current', 'step');
       else card.removeAttribute('aria-current');
     });
-    const [, amount, maximum] = mana[Math.max(0, lastAt(mana, time))];
+    const [, amount, maximum] = mana[Math.max(0, lastAt(mana, time, logOrder.mana, eventLine))];
     updateDamage();
     $('clock').textContent = timeText(time);
-    seek.value = time;
+    seek.value = Math.min(time, Number(seek.max));
     seek.setAttribute('aria-valuetext', timeText(time));
     drawArena(distance, distance <= 5.0001 ? 'Melee' : distance < 11.6699 ? 'Dead zone' : 'Ranged');
     $('distance').textContent = `${distance.toFixed(2)} yd`;
@@ -397,11 +427,12 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
     $('toggle').textContent = '▶ Play';
   }
 
-  function jump(index, fromTour = false) {
+  function jump(index, fromTour = false, at = events[index][0]) {
     if (!fromTour) closeTour();
     pause();
     eventIndex = index;
-    time = events[index][0];
+    time = at;
+    eventLine = time === events[index][0] ? logOrder.events[index] : Infinity;
     render();
   }
 
@@ -412,6 +443,7 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
 
   function tick(now) {
     if (previousTime !== null) time += (now - previousTime) / 1000 * Number($('speed').value);
+    eventLine = Infinity;
     previousTime = now;
     if (pendingStop !== null && time >= pendingStop) {
       pendingStop = null;
@@ -435,8 +467,7 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
 
   function showTourStep() {
     const [index, title, copy, at = events[index][0]] = tourSteps[tourIndex];
-    jump(index, true);
-    time = at;
+    jump(index, true, at);
     $('tour-count').textContent = `Step ${tourIndex + 1} of ${tourSteps.length} · ${timeText(time)}`;
     $('tour-title').textContent = title;
     $('tour-copy').textContent = copy;
@@ -503,10 +534,11 @@ function startReplay({events, moves, mana, duration, catalog, damage}, apl, sour
   function scrub(value) {
     closeTour();
     time = Math.max(from, Math.min(to, value));
+    eventLine = Infinity;
     eventIndex = Math.max(first, lastAt(events, time));
     render();
   }
-  seek.oninput = () => scrub(Number(seek.value));
+  seek.oninput = () => scrub(seek.value === seek.max ? to : Number(seek.value));
   const chart = $('distance-chart');
   function scrubChart(event) {
     const rect = chart.getBoundingClientRect();
