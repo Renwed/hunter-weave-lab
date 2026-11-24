@@ -751,6 +751,19 @@ function startReplay({events, moves, mana, duration, catalog, damage, logOrder},
   setScope();
 }
 
+// Links that point at the dead-zone explainer open it before scrolling there.
+document.addEventListener("click", event => {
+  const link = event.target.closest?.("a[data-open]");
+  if (!link) return;
+  const panel = document.getElementById(link.dataset.open);
+  if (panel?.tagName === "DETAILS") panel.open = true;
+});
+const openFromHash = () => {
+  if (location.hash === "#deadzone") document.getElementById("deadzone").open = true;
+};
+openFromHash();
+window.addEventListener("hashchange", openFromHash);
+
 Promise.all([
   fetch('trace.json').then(response => response.json()),
   fetch('apl.json').then(response => response.json()),

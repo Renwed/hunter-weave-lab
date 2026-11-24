@@ -104,6 +104,7 @@
           <li data-zone="dead">Dead zone</li>
           <li data-zone="ranged">Ranged ≥ 11.67 yd</li>
         </ul>
+        <p class="zone-help"><a href="#deadzone" data-open="deadzone">What’s the dead zone? <span aria-hidden="true">↓</span></a></p>
       </div>
 
       <div class="telemetry">
@@ -126,6 +127,65 @@
         <ol id="event-log"></ol>
       </article>
     </div>
+
+    <details class="deadzone" id="deadzone">
+      <summary>
+        <span class="deadzone-badge" aria-hidden="true">?</span>
+        <span><strong>What’s the dead zone?</strong><small>Why you walk in to 5 yd and back out past 11.67 yd</small></span>
+      </summary>
+      <div class="deadzone-body">
+        <p class="deadzone-lead">The dead zone is the gap where you can’t do <em>anything</em> to the target: you are <strong>too far away to melee</strong> but <strong>too close to shoot</strong>. A bow, gun or crossbow won’t fire inside its minimum range, so Auto Shot, Aimed Shot, Arcane Shot, Serpent Sting and Multi-Shot all stop working there.</p>
+
+        <figure class="zone-diagram">
+          <div class="zone-bar" role="img" aria-label="Distance from the boss: melee from 0 to 5 yards, dead zone from 5 to 11.67 yards, ranged from 11.67 yards outward">
+            <div class="zone-seg" data-zone="melee"><span>Melee</span></div>
+            <div class="zone-seg" data-zone="dead"><span>Dead zone<span class="dz-width"> · 6.67 yd</span></span></div>
+            <div class="zone-seg" data-zone="ranged"><span>Ranged</span></div>
+            <span class="zone-pin" style="--at: 4.6" data-zone="melee" title="Where the APL stops to swing">4.60</span>
+            <span class="zone-pin" style="--at: 11.67" data-zone="ranged" title="Where the APL stops to shoot">11.67</span>
+          </div>
+          <div class="zone-ticks" aria-hidden="true">
+            <span style="--at: 0">0 yd</span><span style="--at: 5">5</span><span style="--at: 11.67">11.67</span><span style="--at: 15">15</span>
+          </div>
+          <figcaption>Distance from the boss, centre to centre, as the sim measures it. Pins mark where your APL stops: <b class="t-melee">4.60 yd</b> to swing and <b class="t-ranged">11.67 yd</b> to shoot.</figcaption>
+        </figure>
+
+        <div class="deadzone-grid">
+          <section>
+            <h4>Where 11.67 yd comes from</h4>
+            <p>The game measures both ranges from the edge of each unit’s <em>combat reach</em> (its body size), not from its centre:</p>
+            <ol class="sum">
+              <li><span>Melee range</span><span>your reach + boss reach + 1⅓ yd <small>(never less than 5 yd)</small></span></li>
+              <li><span>Shot minimum</span><span>your reach + boss reach + 8 yd</span></li>
+              <li class="sum-total"><span>Dead zone width</span><span>8 − 1⅓ = <b>6⅔ yd</b></span></li>
+            </ol>
+            <p>Both reaches cancel out, so the gap is 6⅔ yd however big the boss is. WoWSims puts the melee edge at 5 yd, so shooting starts at <b>5 + 8 − 1⅓ = 11.67 yd</b>. A bigger boss moves both edges further out, but the gap stays the same width.</p>
+            <p class="note">This is how the WoWSims Forever code defines it (<code>MinRangedRange</code>). In game, against a small, player-sized target, the gap measures closer to 6 yd.</p>
+          </section>
+
+          <section>
+            <h4>What it costs you to weave</h4>
+            <ul class="stats">
+              <li><b>7.07 yd</b><span>per crossing (11.67 → 4.60)</span></li>
+              <li><b>1.01 s</b><span>at normal run speed (7 yd/s)</span></li>
+              <li><b>0.78 s</b><span>with Strider Kick’s +30% speed (9.1 yd/s)</span></li>
+              <li><b>46%</b><span>of this fight spent walking: 125 crossings, 116 of 253 s</span></li>
+            </ul>
+            <p>A weave walks the zone twice, which takes about 1.8 to 2 s. You can’t shoot while moving, so the APL only walks in right after an Auto Shot. It also checks that you can swing and get back out before the next shot is due. It will accept delaying that shot by up to about 3 s (the “Max Auto Shot delay” setting). The payoff: Raptor Strike, Strider Kick, Mongoose Bite and white swings did <b>29%</b> of your damage in this run.</p>
+          </section>
+        </div>
+
+        <section class="tips">
+          <h4>Tips in game</h4>
+          <ul>
+            <li><b>Walk in right after an Auto Shot fires</b>, so the swing and the walk back fit inside the time before the next shot.</li>
+            <li><b>Stop a little inside melee range.</b> The APL aims for 4.60 yd, not 5, so small movements don’t knock you out of range mid-swing.</li>
+            <li><b>Use Strider Kick before you walk out.</b> Its 3-second speed boost cuts the trip back from about 1.01 s to 0.78 s.</li>
+            <li><b>Use your action bar instead of counting yards.</b> Your shot buttons turn red inside the dead zone. Step back until they light up again and you are right at the edge.</li>
+          </ul>
+        </section>
+      </div>
+    </details>
 
     <div class="timeline">
       <div class="timeline-head"><label for="seek">Timeline</label><span id="window-label"></span></div>
@@ -170,7 +230,8 @@
     <div id="apl"></div>
     <div class="foot">
       <p>Playback shows one seeded WoWSims iteration of your exported setup. The timer bars track recorded attack intervals, including time spent moving or waiting. Damage counts when it lands, including projectile travel. Timestamps follow the combat log’s hundredth-of-a-second resolution, and fight length varies between runs.</p>
-      <p>Distances are measured centre to centre, as the sim records them, so they include both units’ combat reach. That is why the gap between melee range and shooting range looks wider here than Auto Shot’s 8 yd minimum range.</p>
+      <p>Distances are measured centre to centre, as the sim records them, so they include both units’ combat reach. That is why the gap between melee range and shooting range looks wider here than Auto Shot’s 8 yd minimum range. See <a href="#deadzone" data-open="deadzone">What’s the dead zone?</a> for the full breakdown.</p>
+      <p>Dead zone sources: the WoWSims Forever source code, <a href="https://github.com/wowsims/forever/blob/master/sim/core/constants.go" target="_blank" rel="noopener"><code>sim/core/constants.go</code></a> (<code>MaxMeleeRange</code>, <code>MinRangedRange</code>) and its hunter tests for Strider Kick’s speed. Also the forever-hunter wiki, <a href="https://github-wiki-see.page/m/classic-hunter/forever-hunter/wiki/Anatomy-of-Range-Checks" target="_blank" rel="noopener">Anatomy of Range Checks</a>, and Warcraft Wiki, <a href="https://warcraft.wiki.gg/wiki/Dead_zone" target="_blank" rel="noopener">Dead zone</a>. Walking times, crossings and damage shares come from this page’s replay data.</p>
     </div>
   </section>
 </main>
