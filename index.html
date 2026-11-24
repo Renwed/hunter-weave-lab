@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101311">
+<meta name="description" content="Step through your WoWSims hunter APL and inspect the timing of every weave.">
+<title>Hunter Weave Lab</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="top"><div class="shell top-inner"><a class="brand" href="#play">HUNTER<span> / </span>WEAVE LAB</a><nav aria-label="Sections"><a href="#play">Playback</a><a href="#rotation">APL</a></nav><a id="sim-link" target="_blank" rel="noopener">Open in WoWSims</a></div></header>
+<main class="shell">
+<section class="intro" id="play"><p class="eyebrow">WOW FOREVER / HUNTER</p><h1>Weave Lab</h1><p>Watch your hunter’s rotation, then step through the shots, swings, and movement that make up each weave.</p></section>
+<section class="console" aria-label="Rotation playback">
+ <div class="console-head"><div><p class="eyebrow">SIM REPLAY</p><h2>Single-target weave</h2></div><div class="time" id="clock">−0:20.00</div></div>
+ <div class="walkthrough">
+  <div><h3>Learn your weave</h3><p id="clip-summary"></p></div>
+  <button class="primary" id="tour-start" type="button">Start guided tour</button>
+ </div>
+ <div id="tour" class="tour" hidden aria-labelledby="tour-title">
+  <p id="tour-count" class="eyebrow"></p>
+  <h3 id="tour-title" tabindex="-1"></h3><p id="tour-copy"></p>
+  <div class="tour-controls"><button id="tour-back" type="button">Back</button><button class="primary" id="tour-next" type="button">Continue</button><button id="tour-close" type="button">Exit tour</button></div>
+ </div>
+ <div class="controls">
+ <button id="toggle" class="primary" type="button">▶ Play</button>
+ <label class="speed">Speed <select id="speed"><option value=".25">0.25×</option><option value=".5" selected>0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+ <label class="scope">Replay <select id="scope"><option value="clip">Weave loop</option><option value="full">Full fight</option></select></label>
+ <div class="steps"><button id="prev" type="button" aria-label="Previous event">‹ Step</button><button id="next" type="button" aria-label="Next event">Step ›</button></div>
+ <button id="reset" type="button">Reset</button>
+ </div>
+ <div class="practice">
+ <div class="arena">
+   <div class="arena-head"><span>Position</span><strong id="distance">11.67 yd</strong></div>
+   <canvas id="arena-map" width="760" height="400" role="img" aria-label="Top-down view of your hunter and target"></canvas>
+   <div class="zone-labels"><span>Melee</span><span>Dead zone</span><span>Ranged</span></div>
+  </div>
+  <div id="spell-bar" class="spell-bar" aria-label="Abilities in this replay"></div>
+  <div class="telemetry">
+   <div><span>Bow · Auto Shot</span><strong id="auto">—</strong><progress id="auto-bar" max="1" value="0" aria-label="Progress toward next Auto Shot"></progress></div>
+   <div><span>Two-hander · swing</span><strong id="swing">—</strong><progress id="swing-bar" max="1" value="0" aria-label="Progress toward next melee swing"></progress></div>
+   <div class="mana-row"><span>Mana</span><strong id="mana">—</strong><progress id="mana-bar" max="4440" value="4440" aria-label="Mana"></progress></div>
+  </div>
+  <ol class="weave-phases" aria-label="Weave phases">
+   <li><strong>At range</strong><p>Open with the pre-cast Aimed Shot. In combat, the APL checks Serpent Sting, Arcane Shot, and Multi-Shot with its cooldown and movement rules.</p></li>
+   <li><strong>Walk in</strong><p>Watch for the Auto Shot, then move only when the APL’s weave checks allow it. Your logged melee destination is 4.60 yd.</p></li>
+   <li><strong>In melee</strong><p>Raptor Strike can replace the white swing. Strider Kick, Immolation Trap, Mongoose Bite, and Wing Clip have separate APL checks.</p></li>
+   <li><strong>Walk out</strong><p>Return to 11.67 yd when the weave group sends you back out. Resume ranged actions as the APL allows.</p></li>
+  </ol>
+  <article class="history"><h3>What just happened</h3><ol id="event-log"></ol></article>
+
+ </div>
+ <div class="timeline"><div class="timeline-head"><label for="seek">Timeline</label><span id="window-label"></span></div>
+ <div class="chart-wrap"><canvas id="distance-chart" width="1040" height="80" aria-label="Distance over the replay" role="img"></canvas><span id="chart-cursor" aria-hidden="true"></span></div><div class="scrubber"><div id="markers" aria-hidden="true"></div><input type="range" id="seek" step=".01" min="-20" value="-20" aria-label="Seek replay"></div>
+ <div class="axis" aria-hidden="true" id="axis"></div></div>
+
+ <section class="damage-meter" aria-labelledby="damage-heading">
+  <header><h3 id="damage-heading">Damage meter</h3><span id="damage-scope"></span></header>
+  <dl><div><dt>Damage dealt</dt><dd id="damage-total">0</dd></div><div><dt>Average DPS</dt><dd id="damage-dps">—</dd></div></dl>
+  <details><summary>Damage by ability</summary><ol id="damage-breakdown"></ol><p id="no-damage">No damage in this segment yet.</p></details>
+ </section>
+</section>
+<section class="lower"><article class="panel"><p class="eyebrow">CURRENT EVENT</p><div class="event-title"><div id="event-icon"></div><h2 id="event-name">Loading replay</h2></div><p id="event-description"></p><p class="muted" id="next-event"></p></article></section>
+<section class="rotation" id="rotation"><div class="rotation-head"><div><p class="eyebrow">YOUR WOWSIMS EXPORT</p><h2>Action priority list</h2></div><a class="button" href="apl.json" download>Download APL JSON</a></div>
+ <div id="apl"></div>
+ <p class="foot">Playback shows one seeded WoWSims iteration using your exported setup. The timer bars track recorded attack intervals and include any time spent moving or waiting. Encounter length can vary between runs.</p>
+</section>
+</main>
+</body>
+</html>
