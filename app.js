@@ -288,17 +288,17 @@ const openerTour = [
   [15, 'Resume ranged attacks', 'Arcane Shot fires at 3.44 s, followed by Auto Shot at 3.95 s. The next walk-in starts at 4.07 s and produces a normal melee swing in this run. Your APL re-checks every weave as the fight goes on.'],
 ];
 
-const clipStart = 23.4;
-const clipEnd = 35.44;
+const clipStart = 6.41;
+const clipEnd = 19.13;
 const combatTour = [
-  [53, 'Begin at shooting range', 'At 23.40 s your hunter is at 11.67 yd and starts casting Aimed Shot. The two timer bars follow the next recorded Auto Shot and melee swing.'],
-  [54, 'Watch Auto Shot fire', 'Auto Shot fires at 24.72 s while Aimed Shot is still casting, and its hit is logged at 25.01 s. Stay at range until the cast finishes.'],
-  [55, 'Finish Aimed Shot', 'Aimed Shot completes at 25.11 s and hits at 25.40 s. The log also records the Raptor Strike queue and the start of the walk in at this same timestamp.'],
-  [56, 'Queue Raptor Strike', 'Queueing sets Raptor Strike up to replace your next melee swing. This entry is the queue; the strike itself appears later.'],
-  [57, 'Cross the dead zone', 'The walk starts at 11.67 yd and heads toward 4.60 yd. Watch the marker cross the gap between shooting range and melee range.'],
-  [59, 'Swing and use Strider Kick', 'At 26.06 s Raptor Strike lands as you reach the 5 yd melee boundary. Strider Kick follows at the same displayed time.'],
-  [60, 'Head back out', 'At 26.46 s you turn around. The walk from 4.60 yd back to 11.67 yd takes about 0.78 s.'],
-  [60, 'Back at shooting range', 'You reach shooting range at about 27.24 s. The next recorded ranged action is Arcane Shot at 27.56 s.', 27.24],
+  [21, 'Begin at shooting range', 'At 6.41 s you are back at 11.67 yd after the opener’s two weaves, and your hunter starts casting Aimed Shot. The two timer bars follow the next recorded Auto Shot and melee swing.'],
+  [22, 'Watch Auto Shot fire', 'Auto Shot fires at 6.81 s while Aimed Shot is still casting, and its hit is logged at 7.11 s. Stay at range until the cast finishes.'],
+  [23, 'Finish Aimed Shot', 'Aimed Shot completes at 7.63 s and hits at 7.92 s. You are still at range, so the APL can fit in one more shot before walking in.'],
+  [24, 'Queue Raptor Strike', 'At 8.16 s Raptor Strike is queued to replace your next melee swing. This entry is the queue; the strike itself appears later. Auto Shot fires once more at 8.82 s.'],
+  [26, 'Cross the dead zone', 'Right after that Auto Shot, at 8.91 s, the walk starts at 11.67 yd and heads toward 4.60 yd. Watch the marker cross the gap between shooting range and melee range.'],
+  [27, 'Swing and use Strider Kick', 'At 9.86 s Raptor Strike lands as you reach the 5 yd melee boundary, and Windfury procs on the same swing. Strider Kick follows at 9.94 s.'],
+  [29, 'Head back out', 'At 10.26 s you turn around. Thanks to Strider Kick’s speed boost, the walk from 4.60 yd back to 11.67 yd takes about 0.78 s.'],
+  [46, 'Two more weaves', 'Arcane Shot and Auto Shot fire, then a second weave at 12.00 s gives a normal swing plus Wing Clip. After another Aimed Shot, the third weave at 17.00 s lands a hard-hitting Raptor Strike and Strider Kick. You are back at range at about 19.13 s, where the loop restarts.', 19.13],
 ];
 
 /* ---------- Spell bar ---------- */
@@ -378,8 +378,8 @@ function startReplay({events, moves, mana, duration, catalog, damage, logOrder},
   const swings = attackTrack('melee');
   let from = clipStart;
   let to = clipEnd;
-  let first = 53;
-  let last = 75;
+  let first = 21;
+  let last = 46;
   let time = from;
   let eventLine = Infinity;
   let eventIndex = first;
