@@ -291,14 +291,14 @@ const openerTour = [
 const clipStart = 23.4;
 const clipEnd = 35.44;
 const combatTour = [
-  [52, 'Begin at shooting range', 'At 23.40 s your hunter is at 11.67 yd and starts casting Aimed Shot. The two timer bars follow the next recorded Auto Shot and melee swing.'],
-  [53, 'Watch Auto Shot fire', 'Auto Shot fires at 24.72 s while Aimed Shot is still casting, and its hit is logged at 25.01 s. Stay at range until the cast finishes.'],
-  [54, 'Finish Aimed Shot', 'Aimed Shot completes at 25.11 s and hits at 25.40 s. The log also records the Raptor Strike queue and the start of the walk in at this same timestamp.'],
-  [55, 'Queue Raptor Strike', 'Queueing sets Raptor Strike up to replace your next melee swing. This entry is the queue; the strike itself appears later.'],
-  [56, 'Cross the dead zone', 'The walk starts at 11.67 yd and heads toward 4.60 yd. Watch the marker cross the gap between shooting range and melee range.'],
-  [58, 'Swing and use Strider Kick', 'At 26.06 s Raptor Strike lands as you reach the 5 yd melee boundary. Strider Kick follows at the same displayed time.'],
-  [59, 'Head back out', 'At 26.46 s you turn around. The walk from 4.60 yd back to 11.67 yd takes about 0.78 s.'],
-  [59, 'Back at shooting range', 'You reach shooting range at about 27.24 s. The next recorded ranged action is Arcane Shot at 27.56 s.', 27.24],
+  [53, 'Begin at shooting range', 'At 23.40 s your hunter is at 11.67 yd and starts casting Aimed Shot. The two timer bars follow the next recorded Auto Shot and melee swing.'],
+  [54, 'Watch Auto Shot fire', 'Auto Shot fires at 24.72 s while Aimed Shot is still casting, and its hit is logged at 25.01 s. Stay at range until the cast finishes.'],
+  [55, 'Finish Aimed Shot', 'Aimed Shot completes at 25.11 s and hits at 25.40 s. The log also records the Raptor Strike queue and the start of the walk in at this same timestamp.'],
+  [56, 'Queue Raptor Strike', 'Queueing sets Raptor Strike up to replace your next melee swing. This entry is the queue; the strike itself appears later.'],
+  [57, 'Cross the dead zone', 'The walk starts at 11.67 yd and heads toward 4.60 yd. Watch the marker cross the gap between shooting range and melee range.'],
+  [59, 'Swing and use Strider Kick', 'At 26.06 s Raptor Strike lands as you reach the 5 yd melee boundary. Strider Kick follows at the same displayed time.'],
+  [60, 'Head back out', 'At 26.46 s you turn around. The walk from 4.60 yd back to 11.67 yd takes about 0.78 s.'],
+  [60, 'Back at shooting range', 'You reach shooting range at about 27.24 s. The next recorded ranged action is Arcane Shot at 27.56 s.', 27.24],
 ];
 
 /* ---------- Spell bar ---------- */
@@ -378,7 +378,7 @@ function startReplay({events, moves, mana, duration, catalog, damage, logOrder},
   const swings = attackTrack('melee');
   let from = clipStart;
   let to = clipEnd;
-  let first = 52;
+  let first = 53;
   let last = 75;
   let time = from;
   let eventLine = Infinity;
