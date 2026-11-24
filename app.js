@@ -278,7 +278,7 @@ function drawDistance(moves, from, to) {
 // [event index, title, copy, optional stop time]. Indices point into trace.json events.
 
 const openerTour = [
-  [0, 'Set up before the pull', 'At −20.00 s your hunter casts Aspect of the Hawk. The pre-pull move at −19.00 s adjusts your starting position from 12.00 to 11.67 yd. Hunter’s Mark goes on at −3.30 s.'],
+  [0, 'Set up before the pull', 'Your hunter puts up Aspect of the Hawk and settles at 11.67 yd. (Your sim does this at −20 s; the replay starts at −5 s to skip the wait, and Aspect lasts until cancelled.) Hunter’s Mark goes on at −3.30 s.'],
   [3, 'Pre-cast Aimed Shot', 'Aimed Shot starts casting at −1.70 s. The sim uses Major Frenzy Potion at −1.50 s while the cast is underway. Aimed Shot completes at 0.01 s and its damage lands at 0.30 s.'],
   [7, 'Apply Serpent Sting at range', 'At 0.01 s the log records Aimed Shot completing, then Rapid Fire, then Serpent Sting, all at the same displayed timestamp. You are still at 11.67 yd.'],
   [8, 'Watch for the Auto Shot', 'The first Auto Shot fires at 0.43 s and hits at 0.72 s. In this run you stay at range until 0.99 s. Use the Auto Shot timer to follow the recorded shot timing.'],
